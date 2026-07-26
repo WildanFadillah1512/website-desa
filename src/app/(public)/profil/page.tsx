@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { DynamicSection } from "@/components/DynamicSection";
 import Link from "next/link";
 import { getCollectionDataMap, getPageSections } from "@/lib/cms";
+import { InteriorHero } from "@/components/layout/interior-hero";
 
 export const metadata: Metadata = {
   title: "Profil Resmi Desa",
@@ -20,7 +21,7 @@ export default async function ProfilPage() {
   const pengaturanBeranda = collectionData["pengaturan-beranda"] ?? {};
   const identitasData = collectionData["identitas-desa"] ?? {};
 
-  const bgImage = pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
+  const bgImage = pengaturanBeranda.interior_hero_background || pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
   const desaName = identitasData.nama_desa || "Desa";
 
   return (
@@ -29,31 +30,15 @@ export default async function ProfilPage() {
       {/* ══════════════════════════════════════════════════════
           HERO SECTION (Beranda Style)
       ══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[50vh] flex flex-col items-center justify-center pt-24 pb-12 overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <img src={bgImage} alt="Pemandangan Desa" className="w-full h-full object-cover object-center" />
-          {/* Gradient Overlay for soft contrast (Darker at top for header, soft ivory at bottom) */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-[#FAF9F6]" />
-        </div>
-
-        <div className="relative z-10 section-container text-left w-full max-w-6xl mx-auto mt-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6 drop-shadow-lg">
-            Profil Resmi <br className="md:hidden" />
-            <span className="text-[#A8C5B5]">{desaName}</span>
-          </h1>
-          
-          <p className="text-base md:text-lg text-white/75 font-medium max-w-2xl drop-shadow">
-            Mengenal lebih dekat visi misi, potensi, dan gambaran umum wilayah kami.
-          </p>
-
-          <div className="flex items-center gap-2 mt-6 text-sm text-white/60">
-            <a href="/" className="hover:text-white transition-colors font-medium">Beranda</a>
-            <span>/</span>
-            <span className="text-white/90 font-semibold">Profil</span>
-          </div>
-        </div>
-      </section>
+      <InteriorHero
+        bgImage={bgImage}
+        eyebrow="Profil Desa"
+        title="Profil Resmi"
+        accent={desaName}
+        description="Mengenal lebih dekat visi misi, potensi, dan gambaran umum wilayah kami."
+        current="Profil"
+        icon={Landmark}
+      />
 
       {/* ══════════════════════════════════════════════════════
           MASONRY CONTENT SECTION

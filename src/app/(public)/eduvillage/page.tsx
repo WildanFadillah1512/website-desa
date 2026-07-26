@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { DynamicSection } from "@/components/DynamicSection";
 import Link from "next/link";
 import { getCollectionData, getPageSections } from "@/lib/cms";
+import { InteriorHero } from "@/components/layout/interior-hero";
 
 export const metadata: Metadata = {
   title: "EduVillage",
@@ -17,7 +18,7 @@ export default async function EduVillagePage() {
     getCollectionData("pengaturan-beranda"),
   ]);
 
-  const bgImage = pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
+  const bgImage = pengaturanBeranda.interior_hero_background || pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FAF9F6]">
@@ -25,35 +26,14 @@ export default async function EduVillagePage() {
       {/* ══════════════════════════════════════════════════════
           HERO SECTION (Beranda Style)
       ══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[50vh] flex flex-col justify-end pt-24 pb-12 overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <img src={bgImage} alt="Pemandangan Desa" className="w-full h-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-[#FAF9F6]" />
-        </div>
-
-        <div className="relative z-10 container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="h-5 w-1 rounded-full bg-[#A8C5B5]" />
-            <span className="text-xs font-extrabold tracking-widest text-[#A8C5B5] uppercase drop-shadow">
-              Pendidikan &amp; Beasiswa
-            </span>
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-4 drop-shadow-lg">
-            EduVillage
-          </h1>
-          <p className="text-base md:text-lg text-white/75 font-medium max-w-2xl drop-shadow">
-            Portal informasi pendidikan, direktori kampus, dan program beasiswa untuk generasi muda desa.
-          </p>
-
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 mt-5 text-sm text-white/60">
-            <a href="/" className="hover:text-white transition-colors font-medium">Beranda</a>
-            <span>/</span>
-            <span className="text-white/90 font-semibold">EduVillage</span>
-          </div>
-        </div>
-      </section>
+      <InteriorHero
+        bgImage={bgImage}
+        eyebrow="Pendidikan & Beasiswa"
+        title="EduVillage"
+        description="Portal informasi pendidikan, direktori kampus, dan program beasiswa untuk generasi muda desa."
+        current="EduVillage"
+        icon={GraduationCap}
+      />
 
       {/* ══════════════════════════════════════════════════════
           MASONRY CONTENT SECTION

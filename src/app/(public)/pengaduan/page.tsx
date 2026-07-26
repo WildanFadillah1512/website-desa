@@ -5,12 +5,12 @@ import {
   Search,
   Shield,
 } from "lucide-react";
-import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/db";
 import { pengaduan } from "@/db/schema";
 import { getCollectionDataMap } from "@/lib/cms";
+import { InteriorHero } from "@/components/layout/interior-hero";
 import { ComplaintForm, ComplaintFormHeader } from "./complaint-form";
 
 export const dynamic = "force-dynamic";
@@ -69,42 +69,20 @@ export default async function PengaduanPage({ searchParams }: { searchParams?: P
 
   const pengaturanBeranda = collectionData["pengaturan-beranda"] ?? {};
   const identitasData = collectionData["identitas-desa"] ?? {};
-  const bgImage = pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
+  const bgImage = pengaturanBeranda.interior_hero_background || pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
   const desaName = identitasData.nama_desa || "Desa";
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FAF9F6]">
-      <section className="relative flex min-h-[56vh] flex-col justify-end overflow-hidden pt-24 pb-12">
-        <div className="absolute inset-0 z-0">
-          <img src={bgImage} alt="Pemandangan Desa" className="h-full w-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-[#FAF9F6]" />
-        </div>
-
-        <div className="relative z-10 container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 animate-fade-in-up">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15 text-[#A8C5B5] backdrop-blur-md ring-1 ring-white/20">
-              <HeartHandshake className="h-4 w-4" />
-            </div>
-            <span className="text-xs font-extrabold uppercase tracking-widest text-[#A8C5B5] drop-shadow">
-              Layanan Aspirasi Warga
-            </span>
-          </div>
-
-          <h1 className="max-w-3xl text-4xl font-black leading-[1.1] tracking-tight text-white drop-shadow-lg md:text-5xl lg:text-6xl">
-            Pengaduan Masyarakat
-            <span className="block text-[#A8C5B5]">{desaName}</span>
-          </h1>
-          <p className="mt-5 max-w-2xl text-base font-medium leading-relaxed text-white/80 drop-shadow md:text-lg">
-            Sampaikan laporan, aspirasi, atau keluhan dengan kode pelacakan resmi yang bisa dicek kapan saja.
-          </p>
-
-          <div className="mt-6 flex items-center gap-2 text-sm text-white/65">
-            <Link href="/" className="font-medium transition-colors hover:text-white">Beranda</Link>
-            <span>/</span>
-            <span className="font-semibold text-white/90">Pengaduan</span>
-          </div>
-        </div>
-      </section>
+      <InteriorHero
+        bgImage={bgImage}
+        eyebrow="Layanan Aspirasi Warga"
+        title="Pengaduan Masyarakat"
+        accent={desaName}
+        description="Sampaikan laporan, aspirasi, atau keluhan dengan kode pelacakan resmi yang bisa dicek kapan saja."
+        current="Pengaduan"
+        icon={HeartHandshake}
+      />
 
       <main className="relative z-20 bg-[#FAF9F6]">
         <div className="container mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">

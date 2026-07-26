@@ -38,7 +38,7 @@ export default async function Home() {
   const kecamatan     = identitasData.kecamatan || "Kecamatan";
   const kabupaten     = identitasData.kabupaten || "Kabupaten";
   const heroSlogan    = identitasData.slogan    || `Mewujudkan desa yang religius, mandiri, dan sejahtera untuk seluruh masyarakat.`;
-  const bgImage       = pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
+  const bgImage       = pengaturanBeranda.home_hero_background || pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
 
   const sambutanJudul   = sambutanData.judul            || `Bersama Membangun ${desaName} yang Lebih Baik`;
   const sambutanIsi     = sambutanData.isi_sambutan     || "Pemerintah desa berkomitmen penuh untuk memberikan layanan publik yang transparan, cepat, dan mudah diakses. Website ini hadir sebagai wujud nyata inovasi digital untuk mendekatkan pelayanan kepada seluruh warga masyarakat.";
@@ -60,12 +60,12 @@ export default async function Home() {
       {/* ══════════════════════════════════════════════════════
           SECTION 1: HERO (Classic Full Width)
       ══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[90vh] flex flex-col items-center justify-center pt-20 overflow-hidden">
+      <section className="relative min-h-[92vh] flex flex-col items-center justify-center pt-24 pb-16 overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <img src={bgImage} alt="Pemandangan Desa" className="w-full h-full object-cover object-center" />
-          {/* Dark overlay for contrast */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-[#FAF9F6]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,12,20,0.68)_0%,rgba(4,12,20,0.28)_42%,rgba(250,249,246,0.96)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,24,16,0.34)_0%,rgba(7,24,16,0.24)_38%,rgba(7,24,16,0.04)_68%)]" />
         </div>
 
         <div className="relative z-10 section-container text-center w-full max-w-4xl mx-auto animate-fade-in-up">
@@ -74,18 +74,12 @@ export default async function Home() {
             Portal Resmi {desaName}
           </div>
           
-          <h1
-            className="text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-6"
-            style={{ textShadow: '0 2px 24px rgba(0,0,0,0.9), 0 1px 8px rgba(0,0,0,0.8)' }}
-          >
+          <h1 className="hero-readable-title text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] mb-6">
             Selamat Datang <br />
-            <span className="text-[#A8C5B5]">{desaName}</span>
+            <span className="text-[#C8DDCF]">{desaName}</span>
           </h1>
           
-          <p
-            className="text-lg md:text-xl text-white/90 font-medium max-w-2xl mx-auto mb-10"
-            style={{ textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}
-          >
+          <p className="hero-readable-copy text-lg md:text-xl font-semibold max-w-2xl mx-auto mb-10">
             {kecamatan} · {kabupaten}
             <br className="hidden sm:block" />
             {heroSlogan}

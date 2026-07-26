@@ -1,7 +1,7 @@
 import { FileText, ArrowRight, Clock, CheckCircle, Info } from "lucide-react";
 import { Metadata } from "next";
-import Link from "next/link";
 import { getCollectionData, getPageSections } from "@/lib/cms";
+import { InteriorHero } from "@/components/layout/interior-hero";
 
 export const metadata: Metadata = {
   title: "Layanan Administrasi",
@@ -16,7 +16,7 @@ export default async function LayananPage() {
     getCollectionData("pengaturan-beranda"),
   ]);
 
-  const bgImage = pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
+  const bgImage = pengaturanBeranda.interior_hero_background || pengaturanBeranda.hero_background || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
 
   const layananItems = layananSections.map(({ collection, entries }, idx) => ({
     col: collection,
@@ -30,33 +30,14 @@ export default async function LayananPage() {
       {/* ══════════════════════════════════════════════════════
           HERO SECTION (same style as /profil)
       ══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[45vh] flex flex-col justify-end pt-24 pb-12 overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <img src={bgImage} alt="Pemandangan Desa" className="w-full h-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-[#FAF9F6]" />
-        </div>
-
-        <div className="relative z-10 container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="h-5 w-1 rounded-full bg-[#A8C5B5]" />
-            <span className="text-xs font-extrabold tracking-widest text-[#A8C5B5] uppercase drop-shadow">Pelayanan Publik Terpadu</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-3 leading-tight drop-shadow-lg">
-            Layanan Administrasi Online
-          </h1>
-          <p className="text-white/75 text-base md:text-lg max-w-2xl drop-shadow">
-            Ajukan permohonan surat dan administrasi dengan mudah, cepat, dan transparan dari mana saja tanpa antre.
-          </p>
-
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 mt-5 text-sm text-white/60">
-            <Link href="/" className="hover:text-white transition-colors font-medium">Beranda</Link>
-            <span>/</span>
-            <span className="text-white/90 font-semibold">Layanan</span>
-          </div>
-        </div>
-      </section>
+      <InteriorHero
+        bgImage={bgImage}
+        eyebrow="Pelayanan Publik Terpadu"
+        title="Layanan Administrasi Online"
+        description="Ajukan permohonan surat dan administrasi dengan mudah, cepat, dan transparan dari mana saja tanpa antre."
+        current="Layanan"
+        icon={FileText}
+      />
 
       {/* ══════════════════════════════════════════════════════
           BENEFIT BADGES
