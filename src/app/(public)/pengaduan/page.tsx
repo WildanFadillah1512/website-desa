@@ -2,7 +2,6 @@ import { randomBytes } from "node:crypto";
 import {
   CheckCircle,
   Clock,
-  FileUp,
   HeartHandshake,
   LockKeyhole,
   MessageSquareText,
@@ -18,7 +17,6 @@ import { desc, eq } from "drizzle-orm";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/db";
 import { pengaduan } from "@/db/schema";
-import { uploadPublicAttachment } from "@/lib/blob-upload";
 import { getCollectionDataMap } from "@/lib/cms";
 
 export const dynamic = "force-dynamic";
@@ -72,8 +70,6 @@ async function createPengaduanAction(formData: FormData) {
   const kontak = cleanInput(formData.get("kontak"));
   const kategori = cleanInput(formData.get("kategori"));
   const isiLaporan = cleanInput(formData.get("isiLaporan"));
-  const isPublic = formData.get("isPublic") === "on";
-  const attachment = formData.get("lampiran");
 
   if (!namaPelapor || !kategori || !isiLaporan) {
     redirect("/pengaduan?error=Lengkapi%20nama%2C%20kategori%2C%20dan%20isi%20laporan.");
@@ -84,13 +80,8 @@ async function createPengaduanAction(formData: FormData) {
   }
 
   const trackingCode = await makeTrackingCode();
-  let lampiranUrl: string | null = null;
 
   try {
-    if (attachment instanceof File && attachment.size > 0) {
-      lampiranUrl = await uploadPublicAttachment(attachment, `pengaduan/${trackingCode}`);
-    }
-
     await db.insert(pengaduan).values({
       trackingCode,
       namaPelapor,
@@ -98,8 +89,8 @@ async function createPengaduanAction(formData: FormData) {
       kontak: kontak || null,
       kategori,
       isiLaporan,
-      lampiranUrl,
-      isPublic,
+      lampiranUrl: null,
+      isPublic: false,
       status: "menunggu",
     });
   } catch (error) {
@@ -263,21 +254,6 @@ export default async function PengaduanPage({ searchParams }: { searchParams?: P
                     />
                   </Field>
 
-                  <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-                    <Field label="Lampiran (Opsional)">
-                      <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 text-sm font-bold text-slate-600 transition-colors hover:border-[#6B8E7B] hover:bg-[#6B8E7B]/5">
-                        <FileUp className="h-4 w-4" />
-                        Pilih foto atau PDF
-                        <input name="lampiran" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" />
-                      </label>
-                      <p className="mt-1.5 text-xs font-medium text-slate-500">Format JPG, PNG, WEBP, PDF. Maksimal 4MB.</p>
-                    </Field>
-                    <label className="flex min-h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700">
-                      <input name="isPublic" type="checkbox" className="h-4 w-4 accent-[#166534]" />
-                      Izinkan tampil anonim
-                    </label>
-                  </div>
-
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                     <div className="flex gap-3">
                       <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
@@ -343,19 +319,31 @@ export default async function PengaduanPage({ searchParams }: { searchParams?: P
                 )}
               </section>
 
-              <section className="rounded-2xl bg-[#0B1E12] p-6 text-white">
-                <p className="text-xs font-bold uppercase tracking-widest text-[#A8C5B5]">Alur Pengaduan</p>
-                <ol className="mt-5 space-y-4">
+              <section className="rounded-2xl border border-[#6B8E7B]/20 bg-white p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-extrabold uppercase tracking-widest text-[#6B8E7B]">Alur Pengaduan</p>
+                    <h2 className="mt-2 text-xl font-black tracking-tight text-[#334155]">Dari laporan sampai tindak lanjut</h2>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF9F6] text-[#166534] ring-1 ring-[#6B8E7B]/15">
+                    <HeartHandshake className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <ol className="mt-6 space-y-0">
                   {[
-                    ["Tulis laporan", "Warga mengirim laporan lengkap beserta kontak atau lampiran."],
+                    ["Tulis laporan", "Warga mengirim lokasi, kronologi, dan kontak yang bisa dihubungi."],
                     ["Verifikasi admin", "Perangkat desa memeriksa kategori, lokasi, dan prioritas."],
                     ["Tindak lanjut", "Status dan tanggapan diperbarui agar bisa dilacak warga."],
                   ].map(([title, body], index) => (
-                    <li key={title} className="flex gap-3">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 text-xs font-black text-[#A8C5B5]">{index + 1}</span>
-                      <span>
-                        <span className="block text-sm font-bold">{title}</span>
-                        <span className="mt-0.5 block text-xs leading-relaxed text-white/55">{body}</span>
+                    <li key={title} className="relative flex gap-4 pb-5 last:pb-0">
+                      {index < 2 && <span className="absolute left-[17px] top-9 h-[calc(100%-2.25rem)] w-px bg-[#6B8E7B]/18" />}
+                      <span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF3] text-xs font-black text-[#166534] ring-1 ring-[#6B8E7B]/15">
+                        {index + 1}
+                      </span>
+                      <span className="pt-0.5">
+                        <span className="block text-sm font-black text-[#334155]">{title}</span>
+                        <span className="mt-1 block text-sm leading-relaxed text-slate-600">{body}</span>
                       </span>
                     </li>
                   ))}
@@ -364,14 +352,20 @@ export default async function PengaduanPage({ searchParams }: { searchParams?: P
 
               <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
                 {[
-                  { icon: Shield, title: "Privasi terjaga", body: "Identitas tidak ditampilkan ke publik." },
+                  { icon: Shield, title: "Privasi terjaga", body: "Data pelapor hanya untuk klarifikasi perangkat desa." },
                   { icon: Clock, title: "Tercatat otomatis", body: "Setiap laporan memiliki kode unik." },
                   { icon: CheckCircle, title: "Bisa dipantau", body: "Status dapat dicek tanpa login." },
                 ].map(({ icon: Icon, title, body }) => (
-                  <div key={title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <Icon className="h-5 w-5 text-[#166534]" />
-                    <p className="mt-3 text-sm font-bold text-slate-900">{title}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{body}</p>
+                  <div key={title} className="rounded-xl border border-[#6B8E7B]/15 bg-white p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FAF9F6] text-[#166534]">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span>
+                        <span className="block text-sm font-black text-[#334155]">{title}</span>
+                        <span className="mt-1 block text-xs leading-relaxed text-slate-500">{body}</span>
+                      </span>
+                    </div>
                   </div>
                 ))}
               </section>

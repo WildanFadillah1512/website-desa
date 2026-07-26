@@ -2,12 +2,6 @@ import { del, put } from "@vercel/blob";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const ALLOWED_ATTACHMENT_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "application/pdf",
-]);
 
 function safeFileName(filename: string) {
   const fallback = "upload.jpg";
@@ -48,26 +42,6 @@ export async function resolveImageField(formData: FormData, key: string) {
   } catch {
     // Existing local/static/base64 values do not need Blob cleanup.
   }
-
-  return blob.url;
-}
-
-export async function uploadPublicAttachment(fileValue: File, folder: string) {
-  if (fileValue.size === 0) {
-    return null;
-  }
-
-  if (!ALLOWED_ATTACHMENT_TYPES.has(fileValue.type)) {
-    throw new Error("Lampiran harus berupa JPG, PNG, WEBP, atau PDF.");
-  }
-
-  if (fileValue.size > MAX_UPLOAD_BYTES) {
-    throw new Error("Ukuran lampiran maksimal 4MB.");
-  }
-
-  const blob = await put(`${folder}/${Date.now()}-${safeFileName(fileValue.name)}`, fileValue, {
-    access: "public",
-  });
 
   return blob.url;
 }
