@@ -15,12 +15,26 @@ import { encrypt, decrypt } from "./jwt";
 
 export { encrypt, decrypt };
 
+const SESSION_COOKIE_NAMES = ["desa_admin_session", "session"] as const;
+const SESSION_MAX_AGE_SECONDS = 24 * 60 * 60;
+
 export async function createSession(user: { id: number; role: string; name: string; username: string }) {
   const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const session = await encrypt({ user, expires });
+  const cookieStore = await cookies();
 
-  (await cookies()).set("session", session, {
+  cookieStore.set("desa_admin_session", session, {
     expires,
+    maxAge: SESSION_MAX_AGE_SECONDS,
+    httpOnly: true,
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+
+  cookieStore.set("session", "", {
+    expires: new Date(0),
+    maxAge: 0,
     httpOnly: true,
     path: "/",
     secure: process.env.NODE_ENV === "production",
@@ -29,17 +43,37 @@ export async function createSession(user: { id: number; role: string; name: stri
 }
 
 export const getSession = cache(async () => {
-  const session = (await cookies()).get("session")?.value;
-  if (!session) return null;
-  return await decrypt(session);
+  const cookieStore = await cookies();
+  const cookieName = SESSION_COOKIE_NAMES.find((name) => cookieStore.get(name)?.value);
+  const session = cookieName ? cookieStore.get(cookieName)?.value : undefined;
+
+  if (!session) {
+    console.warn("[auth] Admin session cookie missing");
+    return null;
+  }
+
+  try {
+    return await decrypt(session);
+  } catch (error) {
+    console.warn("[auth] Admin session decrypt failed", {
+      cookieName,
+      hasAuthSecret: Boolean(process.env.AUTH_SECRET),
+      error: error instanceof Error ? error.message : "unknown",
+    });
+    return null;
+  }
 });
 
 export async function destroySession() {
-  (await cookies()).set("session", "", {
-    expires: new Date(0),
-    httpOnly: true,
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
+  const cookieStore = await cookies();
+  for (const name of SESSION_COOKIE_NAMES) {
+    cookieStore.set(name, "", {
+      expires: new Date(0),
+      maxAge: 0,
+      httpOnly: true,
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+  }
 }
