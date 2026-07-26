@@ -1,6 +1,7 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import type { NextRequest } from "next/server";
+import { decrypt } from "@/lib/auth";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -16,8 +17,9 @@ function safeFileName(filename: string) {
   return clean || fallback;
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const session = await getSession();
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const sessionCookie = request.cookies.get("session")?.value;
+  const session = sessionCookie ? await decrypt(sessionCookie).catch(() => null) : null;
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -32,6 +32,7 @@ export function ImageUpload({ name, defaultValue }: { name: string; defaultValue
     try {
       const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
         method: "POST",
+        credentials: "same-origin",
         headers: { "content-type": file.type },
         body: file,
       });
