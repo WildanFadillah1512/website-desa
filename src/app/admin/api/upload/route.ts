@@ -28,7 +28,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ?.slice("session=".length);
 
   const session = sessionCookie ? await decrypt(sessionCookie).catch(() => null) : null;
-  if (!session) {
+  const isProxyAuthenticated = request.headers.get("x-admin-auth") === "1";
+
+  if (!session && !isProxyAuthenticated) {
     return NextResponse.json(
       {
         error: sessionCookie

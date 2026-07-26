@@ -33,6 +33,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
 
+  if (isProtectedRoute && session) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-admin-auth", "1");
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
   return NextResponse.next();
 }
 
