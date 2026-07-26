@@ -43,7 +43,12 @@ export default async function LoginPage() {
 
         <section className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[1fr_460px] lg:py-14">
           <div className="max-w-2xl animate-fade-in-up">
-            <Link href="/" className="mb-8 inline-flex items-center gap-4">
+            <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-extrabold uppercase tracking-widest text-[#D6E7DC] ring-1 ring-white/15 backdrop-blur-md">
+              <LockKeyhole className="h-3.5 w-3.5" />
+              Akses Aparatur Desa
+            </p>
+
+            <Link href="/" className="mb-8 flex w-fit items-center gap-4">
               <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-xl ring-1 ring-white/20">
                 {logo ? (
                   <img src={logo} alt={`Logo ${desaName}`} className="h-full w-full object-contain" />
@@ -59,10 +64,6 @@ export default async function LoginPage() {
               </span>
             </Link>
 
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-extrabold uppercase tracking-widest text-[#D6E7DC] ring-1 ring-white/15 backdrop-blur-md">
-              <LockKeyhole className="h-3.5 w-3.5" />
-              Akses Aparatur Desa
-            </p>
             <h1 className="hero-readable-title max-w-2xl text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
               Portal Admin Sistem Informasi Desa
             </h1>
