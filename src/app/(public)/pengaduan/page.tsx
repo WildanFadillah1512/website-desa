@@ -1,308 +1,360 @@
-"use client";
-
-import { useState } from "react";
+import { randomBytes } from "node:crypto";
 import {
-  HeartHandshake, CheckCircle, AlertCircle, Search,
-  ArrowRight, Send, Shield, Clock, Users, ChevronRight,
+  CheckCircle,
+  Clock,
+  FileUp,
+  HeartHandshake,
+  LockKeyhole,
+  MessageSquareText,
+  Search,
+  Send,
+  Shield,
 } from "lucide-react";
+import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { desc, eq } from "drizzle-orm";
 import SectionHero from "@/components/ui/section-hero";
+import { Badge } from "@/components/ui/badge";
+import { db } from "@/db";
+import { pengaduan } from "@/db/schema";
+import { uploadPublicAttachment } from "@/lib/blob-upload";
 
-/* ── Step indicator ─────────────────────────────── */
-const STEPS = [
-  { n: 1, label: "Tulis Laporan",    desc: "Isi detail pengaduan Anda" },
-  { n: 2, label: "Verifikasi",       desc: "Admin desa menverifikasi" },
-  { n: 3, label: "Tindak Lanjut",    desc: "Laporan diselesaikan" },
-];
+export const dynamic = "force-dynamic";
 
-/* ── Category options ───────────────────────────── */
+type SearchParams = Record<string, string | string[] | undefined>;
+type ComplaintStatus = "menunggu" | "diproses" | "selesai" | "ditolak";
+
 const CATEGORIES = [
-  { value: "infrastruktur", label: "🏗️ Infrastruktur & Lingkungan" },
-  { value: "pelayanan",     label: "📋 Pelayanan Administrasi" },
-  { value: "sosial",        label: "🤝 Kesejahteraan & Sosial" },
-  { value: "keamanan",      label: "🛡️ Keamanan & Ketertiban" },
-  { value: "lainnya",       label: "📌 Lainnya" },
+  { value: "infrastruktur", label: "Infrastruktur & Lingkungan" },
+  { value: "pelayanan", label: "Pelayanan Administrasi" },
+  { value: "sosial", label: "Kesejahteraan & Sosial" },
+  { value: "keamanan", label: "Keamanan & Ketertiban" },
+  { value: "lainnya", label: "Lainnya" },
 ];
 
-export default function PengaduanPage() {
-  const [trackingCode, setTrackingCode] = useState("");
-  const [status, setStatus] = useState<any>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+const STATUS_LABELS: Record<ComplaintStatus, string> = {
+  menunggu: "Menunggu verifikasi",
+  diproses: "Sedang diproses",
+  selesai: "Selesai",
+  ditolak: "Ditolak",
+};
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1200)); // simulate
-    setIsLoading(false);
-    setSubmitted(true);
+function getParam(params: SearchParams, key: string) {
+  const value = params[key];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function cleanInput(value: FormDataEntryValue | null) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function makeTrackingCode() {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = `LAP-${new Date().getFullYear()}-${randomBytes(3).toString("hex").toUpperCase()}`;
+    const existing = await db.query.pengaduan.findFirst({
+      where: eq(pengaduan.trackingCode, code),
+      columns: { id: true },
+    });
+
+    if (!existing) return code;
   }
 
-  async function handleCheckStatus(e: React.FormEvent) {
-    e.preventDefault();
-    if (trackingCode.length > 5) {
-      setStatus({
-        status: "diproses",
-        kode: trackingCode,
-        tanggapan: "Laporan Anda sedang didisposisikan ke perangkat desa terkait.",
-      });
-    } else {
-      setStatus({ error: "Kode resi tidak ditemukan. Periksa kembali kode Anda." });
+  return `LAP-${new Date().getFullYear()}-${Date.now().toString(36).toUpperCase()}`;
+}
+
+async function createPengaduanAction(formData: FormData) {
+  "use server";
+
+  const namaPelapor = cleanInput(formData.get("namaPelapor"));
+  const nik = cleanInput(formData.get("nik"));
+  const kontak = cleanInput(formData.get("kontak"));
+  const kategori = cleanInput(formData.get("kategori"));
+  const isiLaporan = cleanInput(formData.get("isiLaporan"));
+  const isPublic = formData.get("isPublic") === "on";
+  const attachment = formData.get("lampiran");
+
+  if (!namaPelapor || !kategori || !isiLaporan) {
+    redirect("/pengaduan?error=Lengkapi%20nama%2C%20kategori%2C%20dan%20isi%20laporan.");
+  }
+
+  if (isiLaporan.length < 20) {
+    redirect("/pengaduan?error=Isi%20laporan%20minimal%2020%20karakter%20agar%20mudah%20ditindaklanjuti.");
+  }
+
+  const trackingCode = await makeTrackingCode();
+  let lampiranUrl: string | null = null;
+
+  try {
+    if (attachment instanceof File && attachment.size > 0) {
+      lampiranUrl = await uploadPublicAttachment(attachment, `pengaduan/${trackingCode}`);
     }
+
+    await db.insert(pengaduan).values({
+      trackingCode,
+      namaPelapor,
+      nik: nik || null,
+      kontak: kontak || null,
+      kategori,
+      isiLaporan,
+      lampiranUrl,
+      isPublic,
+      status: "menunggu",
+    });
+  } catch (error) {
+    console.error("Create pengaduan error:", error);
+    redirect("/pengaduan?error=Laporan%20belum%20berhasil%20dikirim.%20Silakan%20coba%20lagi.");
   }
+
+  revalidatePath("/admin/pengaduan");
+  redirect(`/pengaduan?terkirim=${encodeURIComponent(trackingCode)}`);
+}
+
+function statusVariant(status: string): ComplaintStatus {
+  if (status === "diproses") return "diproses";
+  if (status === "selesai") return "selesai";
+  if (status === "ditolak") return "ditolak";
+  return "menunggu";
+}
+
+function formatDate(date: Date | null) {
+  if (!date) return "-";
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Jakarta",
+  }).format(date);
+}
+
+export default async function PengaduanPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
+  const params = (await searchParams) ?? {};
+  const successCode = getParam(params, "terkirim");
+  const errorMessage = getParam(params, "error");
+  const kode = getParam(params, "kode")?.trim().toUpperCase();
+  const trackedComplaint = kode
+    ? await db.query.pengaduan.findFirst({
+        where: eq(pengaduan.trackingCode, kode),
+        columns: {
+          trackingCode: true,
+          kategori: true,
+          status: true,
+          tanggapan: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: desc(pengaduan.createdAt),
+      })
+    : null;
 
   return (
     <>
       <SectionHero
         icon={HeartHandshake}
         eyebrow="Layanan Aspirasi"
-        title="Lapor & Pengaduan"
-        description="Sampaikan keluhan, aspirasi, dan pengaduan secara langsung kepada pemerintah desa. Anonim tersedia."
+        title="Pengaduan Masyarakat"
+        description="Sampaikan laporan warga dengan kode pelacakan yang bisa dicek kapan saja."
         breadcrumbs={[{ label: "Beranda", href: "/" }, { label: "Pengaduan" }]}
       />
 
-      <div className="bg-white">
-        <div className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-14 lg:py-20">
-
-          {/* Trust badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-14">
-            {[
-              { icon: Shield,       label: "Anonim Tersedia",     desc: "Identitas bisa disembunyikan" },
-              { icon: Clock,        label: "Respons Cepat",       desc: "Ditindaklanjuti dalam 3-7 hari" },
-              { icon: CheckCircle,  label: "Transparan",          desc: "Pantau status laporan real-time" },
-            ].map(({ icon: Icon, label, desc }) => (
-              <div key={label} className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
-                <div className="h-9 w-9 rounded-xl bg-[#166534]/10 flex items-center justify-center shrink-0">
-                  <Icon className="h-5 w-5 text-[#166534]" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-sm">{label}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
+      <main className="bg-white">
+        <div className="container mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 bg-[#FAF9F6] p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#6B8E7B]/12 text-[#166534]">
+                    <MessageSquareText className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tight text-[#334155]">Buat Laporan Baru</h2>
+                    <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
+                      Tuliskan lokasi, kronologi, dan harapan tindak lanjut dengan jelas agar perangkat desa dapat memprosesnya lebih cepat.
+                    </p>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          <div className="grid lg:grid-cols-5 gap-8 lg:gap-12 items-start">
-
-            {/* ── Form (3/5) ──────────────────────────── */}
-            <div className="lg:col-span-3">
-              {!submitted ? (
-                <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-slate-100 bg-slate-50/60">
-                    <h2 className="text-xl font-black text-slate-900 tracking-tight">Buat Laporan Baru</h2>
-                    <p className="text-slate-500 text-sm mt-1">Identitas Anda dapat disembunyikan (Anonim).</p>
-                  </div>
-
-                  <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    {/* Nama */}
-                    <div>
-                      <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
-                        Nama Pelapor
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Nama Lengkap atau tulis 'Anonim'"
-                        required
-                        className="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#166534] focus:ring-2 focus:ring-[#166534]/15 transition-all"
-                      />
-                    </div>
-
-                    {/* No HP + Kategori */}
-                    <div className="grid sm:grid-cols-2 gap-4">
+              <div className="p-6">
+                {successCode && (
+                  <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-5">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-700" />
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
-                          No. HP (WhatsApp)
-                        </label>
-                        <input
-                          type="tel"
-                          placeholder="08xxx"
-                          className="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#166534] focus:ring-2 focus:ring-[#166534]/15 transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
-                          Kategori
-                        </label>
-                        <select
-                          required
-                          className="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 focus:outline-none focus:border-[#166534] focus:ring-2 focus:ring-[#166534]/15 transition-all"
-                        >
-                          <option value="">Pilih Kategori...</option>
-                          {CATEGORIES.map((c) => (
-                            <option key={c.value} value={c.value}>{c.label}</option>
-                          ))}
-                        </select>
+                        <p className="font-bold text-green-900">Laporan berhasil dikirim.</p>
+                        <p className="mt-1 text-sm text-green-800">
+                          Simpan kode pelacakan ini: <span className="font-mono font-black">{successCode}</span>
+                        </p>
                       </div>
                     </div>
+                  </div>
+                )}
 
-                    {/* Isi Laporan */}
-                    <div>
-                      <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
-                        Isi Laporan / Pengaduan
+                {errorMessage && (
+                  <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+                    {errorMessage}
+                  </div>
+                )}
+
+                <form action={createPengaduanAction} className="space-y-5">
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Nama Pelapor">
+                      <input name="namaPelapor" required placeholder="Nama lengkap atau Anonim" className="field-input" />
+                    </Field>
+                    <Field label="Kontak">
+                      <input name="kontak" placeholder="No. HP atau email aktif" className="field-input" />
+                    </Field>
+                  </div>
+
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="NIK (Opsional)">
+                      <input name="nik" inputMode="numeric" maxLength={20} placeholder="Boleh dikosongkan" className="field-input" />
+                    </Field>
+                    <Field label="Kategori">
+                      <select name="kategori" required defaultValue="" className="field-input">
+                        <option value="" disabled>Pilih kategori laporan</option>
+                        {CATEGORIES.map((category) => (
+                          <option key={category.value} value={category.value}>{category.label}</option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+
+                  <Field label="Isi Laporan">
+                    <textarea
+                      name="isiLaporan"
+                      required
+                      minLength={20}
+                      rows={6}
+                      placeholder="Contoh: Lampu jalan di RT 02/RW 03 mati sejak Jumat malam, membuat jalan gelap dan rawan..."
+                      className="field-input min-h-36 resize-y py-3"
+                    />
+                  </Field>
+
+                  <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+                    <Field label="Lampiran (Opsional)">
+                      <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 text-sm font-bold text-slate-600 transition-colors hover:border-[#6B8E7B] hover:bg-[#6B8E7B]/5">
+                        <FileUp className="h-4 w-4" />
+                        Pilih foto atau PDF
+                        <input name="lampiran" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" />
                       </label>
-                      <textarea
-                        required
-                        rows={5}
-                        placeholder="Ceritakan secara detail — lokasi, waktu, kronologi, dan harapan Anda..."
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#166534] focus:ring-2 focus:ring-[#166534]/15 transition-all resize-none"
-                      />
-                    </div>
-
-                    {/* Alert */}
-                    <div className="flex gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800 text-xs">
-                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
-                      <p>Setelah mengirim, Anda akan mendapatkan <strong>Kode Resi Pelacakan</strong>. Simpan kode tersebut untuk memantau status laporan.</p>
-                    </div>
-
-                    {/* Submit */}
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-full h-12 rounded-xl bg-[#166534] text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#14532d] active:scale-[0.99] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {isLoading ? (
-                        <>
-                          <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                          Mengirim...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4" />
-                          Kirim Laporan
-                        </>
-                      )}
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                /* Success state */
-                <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-10 text-center">
-                  <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5">
-                    <CheckCircle className="h-9 w-9 text-[#166534]" />
+                      <p className="mt-1.5 text-xs font-medium text-slate-500">Format JPG, PNG, WEBP, PDF. Maksimal 4MB.</p>
+                    </Field>
+                    <label className="flex min-h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700">
+                      <input name="isPublic" type="checkbox" className="h-4 w-4 accent-[#166534]" />
+                      Izinkan tampil anonim
+                    </label>
                   </div>
-                  <h3 className="text-2xl font-black text-slate-900 mb-2">Laporan Terkirim!</h3>
-                  <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                    Terima kasih telah menyampaikan laporan. Pemerintah desa akan segera menindaklanjuti.
-                  </p>
-                  <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 mb-6 text-center">
-                    <p className="text-xs text-slate-400 mb-1">Kode Resi Anda</p>
-                    <p className="text-2xl font-black text-[#166534] tracking-widest font-mono">
-                      LAP-{new Date().getFullYear()}-{Math.random().toString(36).substring(2, 7).toUpperCase()}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">Simpan kode ini untuk memantau status laporan</p>
+
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <div className="flex gap-3">
+                      <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                      <p>Data kontak hanya dipakai perangkat desa untuk klarifikasi laporan. Kode pelacakan akan muncul setelah laporan tersimpan.</p>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setSubmitted(false)}
-                    className="text-sm font-bold text-[#166534] hover:text-[#14532d] transition-colors"
-                  >
-                    Buat Laporan Baru
+
+                  <button type="submit" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#166534] px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#14532d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#166534] focus-visible:ring-offset-2 sm:w-auto">
+                    <Send className="h-4 w-4" />
+                    Kirim Laporan
                   </button>
-                </div>
-              )}
-
-              {/* ── Track Status ──────────────────────── */}
-              <div className="mt-6 bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/60">
-                  <h2 className="text-xl font-black text-slate-900 tracking-tight">Cek Status Laporan</h2>
-                  <p className="text-slate-500 text-sm mt-1">Masukkan kode resi untuk melihat tindak lanjut.</p>
-                </div>
-                <form onSubmit={handleCheckStatus} className="p-6">
-                  <div className="flex gap-3">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <input
-                        type="text"
-                        value={trackingCode}
-                        onChange={(e) => setTrackingCode(e.target.value)}
-                        placeholder="Contoh: LAP-2026-X8F9Q"
-                        required
-                        className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#166534] focus:ring-2 focus:ring-[#166534]/15 transition-all"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="h-11 px-5 rounded-xl bg-[#166534] text-white font-bold text-sm hover:bg-[#14532d] transition-colors"
-                    >
-                      Cek
-                    </button>
-                  </div>
-
-                  {status && (
-                    <div className="mt-5 animate-fade-in">
-                      {status.error ? (
-                        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-                          <AlertCircle className="h-5 w-5 shrink-0" />
-                          {status.error}
-                        </div>
-                      ) : (
-                        <div className="p-4 rounded-xl bg-green-50 border border-green-200">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-bold text-slate-900">Status Laporan</span>
-                            <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-extrabold uppercase tracking-widest">
-                              {status.status}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-700 leading-relaxed">{status.tanggapan}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </form>
               </div>
-            </div>
+            </section>
 
-            {/* ── Sidebar (2/5) ─────────────────────── */}
-            <div className="lg:col-span-2 space-y-5">
-
-              {/* Alur Pengaduan */}
-              <div className="bg-[#0B1E12] rounded-2xl p-6 relative overflow-hidden">
-                <div aria-hidden className="absolute inset-0 opacity-[0.05]"
-                  style={{ backgroundImage: `radial-gradient(circle at 1px 1px, #4ade80 1px, transparent 0)`, backgroundSize: "24px 24px" }} />
-                <div className="relative z-10">
-                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#4ade80] mb-3">
-                    Alur Pengaduan
-                  </p>
-                  <h3 className="text-lg font-black text-white mb-6">Bagaimana Prosesnya?</h3>
-                  <ol className="space-y-5">
-                    {STEPS.map((step, i) => (
-                      <li key={step.n} className="flex items-start gap-4">
-                        <div className="h-8 w-8 rounded-xl bg-[#166534]/40 border border-[#4ade80]/20 flex items-center justify-center text-[#4ade80] font-black text-xs shrink-0">
-                          {step.n}
-                        </div>
-                        <div>
-                          <p className="font-bold text-white text-sm">{step.label}</p>
-                          <p className="text-xs text-white/40 mt-0.5">{step.desc}</p>
-                        </div>
-                        {i < STEPS.length - 1 && (
-                          <div className="absolute ml-[15px] mt-[2.5rem] h-5 w-px bg-[#4ade80]/10" />
-                        )}
-                      </li>
-                    ))}
-                  </ol>
+            <aside className="space-y-5">
+              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#166534] text-white">
+                    <Search className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight text-[#334155]">Cek Status</h2>
+                    <p className="text-sm text-slate-500">Gunakan kode pelacakan laporan.</p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Jam Operasional */}
-              <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-6">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-3">Jam Pelayanan</p>
-                <div className="space-y-2">
+                <form className="mt-5 flex gap-2" action="/pengaduan">
+                  <input name="kode" defaultValue={kode ?? ""} placeholder="LAP-2026-ABC123" className="field-input h-11 flex-1 font-mono uppercase" />
+                  <button type="submit" className="h-11 rounded-xl bg-[#166534] px-4 text-sm font-bold text-white hover:bg-[#14532d]">Cek</button>
+                </form>
+
+                {kode && (
+                  <div className="mt-5">
+                    {trackedComplaint ? (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-mono text-sm font-black text-slate-800">{trackedComplaint.trackingCode}</span>
+                          <Badge variant={statusVariant(trackedComplaint.status)}>
+                            {STATUS_LABELS[trackedComplaint.status as ComplaintStatus] ?? trackedComplaint.status}
+                          </Badge>
+                        </div>
+                        <dl className="mt-4 space-y-2 text-sm">
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-slate-500">Kategori</dt>
+                            <dd className="font-semibold capitalize text-slate-800">{trackedComplaint.kategori}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-slate-500">Dikirim</dt>
+                            <dd className="font-semibold text-slate-800">{formatDate(trackedComplaint.createdAt)}</dd>
+                          </div>
+                        </dl>
+                        <div className="mt-4 rounded-lg bg-white p-3 text-sm leading-relaxed text-slate-700">
+                          {trackedComplaint.tanggapan || "Belum ada tanggapan admin. Laporan sudah masuk antrean verifikasi."}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+                        Kode pelacakan tidak ditemukan. Periksa kembali kode laporan Anda.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-2xl bg-[#0B1E12] p-6 text-white">
+                <p className="text-xs font-bold uppercase tracking-widest text-[#A8C5B5]">Alur Pengaduan</p>
+                <ol className="mt-5 space-y-4">
                   {[
-                    { hari: "Senin – Jumat",  jam: "08:00 – 15:00 WIB",  aktif: true },
-                    { hari: "Sabtu",          jam: "08:00 – 12:00 WIB",  aktif: false },
-                    { hari: "Minggu",         jam: "Tutup",               aktif: false },
-                  ].map(({ hari, jam, aktif }) => (
-                    <div key={hari} className={`flex items-center justify-between text-sm py-2 border-b border-slate-100 last:border-0 ${aktif ? "text-slate-900" : "text-slate-400"}`}>
-                      <span className="font-medium">{hari}</span>
-                      <span className={`font-bold ${aktif ? "text-[#166534]" : ""}`}>{jam}</span>
-                    </div>
+                    ["Tulis laporan", "Warga mengirim laporan lengkap beserta kontak atau lampiran."],
+                    ["Verifikasi admin", "Perangkat desa memeriksa kategori, lokasi, dan prioritas."],
+                    ["Tindak lanjut", "Status dan tanggapan diperbarui agar bisa dilacak warga."],
+                  ].map(([title, body], index) => (
+                    <li key={title} className="flex gap-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 text-xs font-black text-[#A8C5B5]">{index + 1}</span>
+                      <span>
+                        <span className="block text-sm font-bold">{title}</span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-white/55">{body}</span>
+                      </span>
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ol>
+              </section>
 
-            </div>
+              <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                {[
+                  { icon: Shield, title: "Privasi terjaga", body: "Identitas tidak ditampilkan ke publik." },
+                  { icon: Clock, title: "Tercatat otomatis", body: "Setiap laporan memiliki kode unik." },
+                  { icon: CheckCircle, title: "Bisa dipantau", body: "Status dapat dicek tanpa login." },
+                ].map(({ icon: Icon, title, body }) => (
+                  <div key={title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <Icon className="h-5 w-5 text-[#166534]" />
+                    <p className="mt-3 text-sm font-bold text-slate-900">{title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{body}</p>
+                  </div>
+                ))}
+              </section>
+            </aside>
           </div>
         </div>
-      </div>
+      </main>
     </>
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-bold text-[#334155]">{label}</span>
+      {children}
+    </label>
   );
 }

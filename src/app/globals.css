@@ -139,6 +139,30 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgba(107, 142, 123, 0.05);
 }
 
+.field-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 0 1rem;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.field-input::placeholder {
+  color: #94a3b8;
+}
+.field-input:focus {
+  border-color: #6B8E7B;
+  box-shadow: 0 0 0 3px rgba(107, 142, 123, 0.16);
+}
+input.field-input,
+select.field-input {
+  height: 2.75rem;
+}
+
 /* ═══════════════════════════════════════════════════
    PROSE — Artikel Berita
 ═══════════════════════════════════════════════════ */
