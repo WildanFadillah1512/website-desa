@@ -1,26 +1,161 @@
 @import "tailwindcss";
 
+@theme {
+  /* ── Font Families ─────────────────────────────── */
+  --font-sans:    var(--font-inter);
+  --font-heading: var(--font-plus-jakarta-sans);
+
+  /* ── Brand Colors (Harmonious Soft Nature) ─────── */
+  --color-primary:            #6B8E7B; /* Sage Green */
+  --color-primary-dark:       #557162;
+  --color-dark:               #334155; /* Soft Slate instead of Black */
+  --color-accent:             #8FB39F; /* Lighter Sage */
+  --color-surface:            #FAF9F6; /* Ivory / Soft Cream */
+}
+
+/* ── ROOT ─────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FAF9F6;
+  --foreground: #475569; /* Slate-600 */
+  --radius: 1.5rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ── BASE ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html { 
+  scroll-behavior: smooth; 
+  height: 100%;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.65;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-plus-jakarta-sans), var(--font-inter), system-ui, sans-serif;
+  color: #334155; /* Soft slate heading */
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* ── SELECTION ────────────────────────────────────── */
+::selection { background: #6B8E7B; color: #fff; }
+
+/* ── HIDE SCROLLBAR ───────────────────────────────── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ═══════════════════════════════════════════════════
+   KEYFRAMES & ANIMATIONS
+═══════════════════════════════════════════════════ */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-fade-in-up { animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in    { animation: fade-in 0.6s ease-out both; }
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS / SHARED CLASSES
+═══════════════════════════════════════════════════ */
+
+/* Section wrapper */
+.section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+@media (min-width: 1024px) { .section-container { padding: 0 2rem; } }
+
+/* Soft Card */
+.soft-card {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(107, 142, 123, 0.1);
+  box-shadow: 0 4px 20px -10px rgba(107, 142, 123, 0.15);
+  transition: all 0.3s ease;
+}
+.soft-card:hover {
+  box-shadow: 0 12px 30px -10px rgba(107, 142, 123, 0.25);
+  transform: translateY(-2px);
+  border-color: rgba(107, 142, 123, 0.2);
+}
+
+/* Button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  background-color: #6B8E7B;
+  color: #ffffff;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px -6px rgba(107, 142, 123, 0.6);
+}
+.btn-primary:hover {
+  background-color: #557162;
+  box-shadow: 0 6px 20px -6px rgba(107, 142, 123, 0.8);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  background-color: transparent;
+  color: #6B8E7B;
+  border: 1.5px solid #6B8E7B;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background-color: rgba(107, 142, 123, 0.05);
+}
+
+/* ═══════════════════════════════════════════════════
+   PROSE — Artikel Berita
+═══════════════════════════════════════════════════ */
+.prose-desa {
+  color: #475569;
+  max-width: none;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+}
+.prose-desa h2 {
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #334155;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+.prose-desa a { color: #6B8E7B; text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+.prose-desa a:hover { color: #557162; }
+.prose-desa img { border-radius: 1.5rem; margin: 2rem 0; width: 100%; }

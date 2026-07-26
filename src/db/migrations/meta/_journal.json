@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1784972854032,
+      "tag": "0000_massive_mister_fear",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784975625523,
+      "tag": "0001_wonderful_freak",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785058800000,
+      "tag": "0002_add_public_query_indexes",
+      "breakpoints": true
+    }
+  ]
+}
