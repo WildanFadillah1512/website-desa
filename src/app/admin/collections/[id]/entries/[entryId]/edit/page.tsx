@@ -10,6 +10,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { invalidateCmsCache } from "@/lib/cms";
+import { resolveImageField } from "@/lib/blob-upload";
 
 export default async function EditEntryPage({ params }: { params: Promise<{ id: string; entryId: string }> }) {
   const { id, entryId } = await params;
@@ -30,7 +31,10 @@ export default async function EditEntryPage({ params }: { params: Promise<{ id: 
     "use server";
     const newFieldData: Record<string, string> = {};
     for (const field of fields) {
-      newFieldData[field.key] = (formData.get(field.key) as string) ?? "";
+      newFieldData[field.key] =
+        field.type === "image"
+          ? await resolveImageField(formData, field.key)
+          : ((formData.get(field.key) as string) ?? "");
     }
     const status = (formData.get("status") as string) || "published";
 
@@ -63,7 +67,7 @@ export default async function EditEntryPage({ params }: { params: Promise<{ id: 
           <CardDescription>Kolom bertanda (*) wajib diisi.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <form action={updateEntry}>
+          <form action={updateEntry} encType="multipart/form-data">
             <div className="p-6 space-y-6">
               {fields.map((field) => (
                 <div key={field.id} className="space-y-2">

@@ -11,6 +11,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { invalidateCmsCache } from "@/lib/cms";
+import { resolveImageField } from "@/lib/blob-upload";
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,10 @@ export default async function EntriesPage({ params }: { params: Promise<{ id: st
     // Build new data ONLY for currently-active fields
     const newFieldData: Record<string, string> = {};
     for (const field of fields) {
-      newFieldData[field.key] = (formData.get(field.key) as string) ?? "";
+      newFieldData[field.key] =
+        field.type === "image"
+          ? await resolveImageField(formData, field.key)
+          : ((formData.get(field.key) as string) ?? "");
     }
 
     if (existingId) {
@@ -77,7 +81,7 @@ export default async function EntriesPage({ params }: { params: Promise<{ id: st
   const EntryForm = ({ entry }: { entry?: typeof entries[0] }) => {
     const data = entry ? (entry.data as Record<string, string>) : {};
     return (
-      <form action={saveEntry}>
+      <form action={saveEntry} encType="multipart/form-data">
         {entry && <input type="hidden" name="existingId" value={entry.id} />}
         <div className="p-6 space-y-6">
           {fields.map((field) => (

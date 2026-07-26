@@ -10,6 +10,7 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { invalidateCmsCache } from "@/lib/cms";
+import { resolveImageField } from "@/lib/blob-upload";
 
 export default async function NewEntryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -44,7 +45,10 @@ export default async function NewEntryPage({ params }: { params: Promise<{ id: s
     // Extract dynamic fields based on keys
     const data: Record<string, any> = {};
     for (const field of fields) {
-      data[field.key] = formData.get(field.key);
+      data[field.key] =
+        field.type === "image"
+          ? await resolveImageField(formData, field.key)
+          : formData.get(field.key);
     }
     const status = (formData.get("status") as string) || "published";
 
@@ -85,7 +89,7 @@ export default async function NewEntryPage({ params }: { params: Promise<{ id: s
         </CardHeader>
         
         <CardContent className="p-0">
-          <form action={saveEntry}>
+          <form action={saveEntry} encType="multipart/form-data">
             <div className="p-6 md:p-8 space-y-6">
               
               {/* Render dinamis berdasarkan Fields */}
