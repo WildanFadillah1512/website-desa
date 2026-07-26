@@ -4,7 +4,7 @@ import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  LayoutDashboard, Users, FileText, Settings, Database, 
+  LayoutDashboard, Users, FileText, Database, 
   MessageSquare, LogOut, Menu, X, ChevronRight, Globe 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,6 @@ const navItems = [
   { type: "divider", label: "Konfigurasi Sistem" },
   { href: "/admin/collections", icon: Database, label: "Dynamic Builder" },
   { href: "/admin/users", icon: Users, label: "Aparatur Desa" },
-  { href: "/admin/settings", icon: Settings, label: "Pengaturan" },
 ];
 
 export function AdminLayoutClient({ children, user }: { children: ReactNode, user: any }) {
