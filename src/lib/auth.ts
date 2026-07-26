@@ -35,5 +35,11 @@ export const getSession = cache(async () => {
 });
 
 export async function destroySession() {
-  (await cookies()).delete("session");
+  (await cookies()).set("session", "", {
+    expires: new Date(0),
+    httpOnly: true,
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
 }

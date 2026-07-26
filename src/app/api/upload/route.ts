@@ -18,10 +18,25 @@ function safeFileName(filename: string) {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const sessionCookie = request.cookies.get("session")?.value;
+  const rawCookie = request.headers.get("cookie") ?? "";
+  const sessionCookie =
+    request.cookies.get("session")?.value ??
+    rawCookie
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith("session="))
+      ?.slice("session=".length);
+
   const session = sessionCookie ? await decrypt(sessionCookie).catch(() => null) : null;
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      {
+        error: sessionCookie
+          ? "Session admin tidak valid. Silakan logout lalu login ulang."
+          : "Session admin tidak terkirim. Silakan logout lalu login ulang.",
+      },
+      { status: 401 }
+    );
   }
 
   const { searchParams } = new URL(request.url);
