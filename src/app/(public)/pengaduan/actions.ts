@@ -39,8 +39,8 @@ export async function createPengaduanAction(
   const kategori = cleanInput(formData.get("kategori"));
   const isiLaporan = cleanInput(formData.get("isiLaporan"));
 
-  if (!namaPelapor || !kategori || !isiLaporan) {
-    return { error: "Lengkapi nama, kategori, dan isi laporan.", trackingCode: null };
+  if (!namaPelapor || !kontak || !kategori || !isiLaporan) {
+    return { error: "Lengkapi nama, kontak, kategori, dan isi laporan.", trackingCode: null };
   }
 
   if (isiLaporan.length < 20) {

@@ -3,15 +3,19 @@
 import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, Users, FileText, Database, 
+import {
+  Users, FileText, Database,
   MessageSquare, LogOut, Menu, X, ChevronRight, Globe 
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
-  { href: "/admin", icon: LayoutDashboard, label: "Dasbor", exact: true },
+type NavItem =
+  | { type: "divider"; label: string; href?: never; icon?: never; exact?: never }
+  | { href: string; icon: LucideIcon; label: string; exact?: boolean; type?: never };
+
+const navItems: NavItem[] = [
   { type: "divider", label: "Manajemen Konten" },
   { href: "/admin/berita", icon: FileText, label: "Berita & Artikel" },
   { href: "/admin/pengaduan", icon: MessageSquare, label: "Pengaduan Masyarakat" },
@@ -56,7 +60,7 @@ export function AdminLayoutClient({ children, user }: { children: ReactNode, use
         )}
       >
         <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-slate-100">
-          <Link href="/admin" className="flex items-center gap-2.5 font-bold text-[#17211B]">
+          <Link href="/admin/pengaduan" className="flex items-center gap-2.5 font-bold text-[#17211B]">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#166534] text-white shadow-sm text-sm">
               DC
             </div>
@@ -105,9 +109,9 @@ export function AdminLayoutClient({ children, user }: { children: ReactNode, use
           <form action="/auth/logout" method="post">
             <button
               type="submit"
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 transition-colors"
             >
-              <LogOut className="h-4 w-4 shrink-0 text-slate-400" />
+              <LogOut className="h-4 w-4 shrink-0 text-red-500" />
               Keluar
             </button>
           </form>

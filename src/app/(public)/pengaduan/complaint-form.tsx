@@ -101,7 +101,7 @@ export function ComplaintForm() {
             <input name="namaPelapor" required placeholder="Nama lengkap atau Anonim" className="field-input" />
           </Field>
           <Field label="Kontak">
-            <input name="kontak" placeholder="No. HP atau email aktif" className="field-input" />
+            <input name="kontak" required placeholder="No. HP atau email aktif" className="field-input" />
           </Field>
         </div>
 

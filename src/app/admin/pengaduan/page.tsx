@@ -1,9 +1,9 @@
-import { desc, eq } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import {
+  ArrowRight,
   CheckCircle2,
   Clock3,
   ExternalLink,
-  FileText,
   Inbox,
   MessageSquareText,
   RefreshCw,
@@ -11,14 +11,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { db } from "@/db";
 import { pengaduan } from "@/db/schema";
-import { getSession } from "@/lib/auth";
 import { StatusFilter } from "./status-filter";
 
 export const dynamic = "force-dynamic";
@@ -66,33 +62,6 @@ function formatDate(date: Date | null) {
     timeStyle: "short",
     timeZone: "Asia/Jakarta",
   }).format(date);
-}
-
-async function updatePengaduanAction(formData: FormData) {
-  "use server";
-
-  const session = await getSession();
-  if (!session) redirect("/4d31n");
-
-  const id = Number(formData.get("id"));
-  const status = String(formData.get("status") || "menunggu") as ComplaintStatus;
-  const tanggapan = String(formData.get("tanggapan") || "").trim();
-  const isPublic = formData.get("isPublic") === "on";
-
-  if (!id || !STATUS_LABELS[status]) return;
-
-  await db
-    .update(pengaduan)
-    .set({
-      status,
-      tanggapan: tanggapan || null,
-      isPublic,
-      updatedAt: new Date(),
-    })
-    .where(eq(pengaduan.id, id));
-
-  revalidatePath("/admin/pengaduan");
-  revalidatePath("/pengaduan");
 }
 
 export default async function PengaduanAdminPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
@@ -172,8 +141,13 @@ export default async function PengaduanAdminPage({ searchParams }: { searchParam
             </div>
           ) : (
             rows.map((item) => (
-              <article key={item.id} className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="min-w-0">
+              <Link
+                key={item.id}
+                href={`/admin/pengaduan/${item.id}`}
+                className="group block p-5 transition-colors hover:bg-[#FAF9F6]"
+              >
+                <article className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                  <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={statusVariant(item.status)}>{STATUS_LABELS[item.status as ComplaintStatus] ?? item.status}</Badge>
                     <span className="font-mono text-xs font-black text-slate-500">{item.trackingCode}</span>
@@ -190,59 +164,13 @@ export default async function PengaduanAdminPage({ searchParams }: { searchParam
                     <InfoItem label="Kontak" value={item.kontak || "-"} />
                     <InfoItem label="NIK" value={item.nik || "-"} />
                   </dl>
-
-                  {item.lampiranUrl && (
-                    <Link
-                      href={item.lampiranUrl}
-                      target="_blank"
-                      className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#166534] hover:text-[#14532d]"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Buka lampiran warga
-                    </Link>
-                  )}
-                </div>
-
-                <Card className="self-start rounded-xl border-slate-200 shadow-none">
-                  <CardContent className="p-4">
-                    <form action={updatePengaduanAction} className="space-y-4">
-                      <input type="hidden" name="id" value={item.id} />
-                      <div>
-                        <label className="mb-2 block text-sm font-bold text-[#334155]">Status</label>
-                        <select
-                          name="status"
-                          defaultValue={item.status}
-                          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#6B8E7B] focus:ring-2 focus:ring-[#6B8E7B]/20"
-                        >
-                          {STATUSES.map((status) => (
-                            <option key={status.value} value={status.value}>{status.label}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-bold text-[#334155]">Tanggapan Admin</label>
-                        <textarea
-                          name="tanggapan"
-                          defaultValue={item.tanggapan || ""}
-                          rows={5}
-                          placeholder="Tulis tindak lanjut atau catatan untuk warga..."
-                          className="w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed text-slate-800 outline-none focus:border-[#6B8E7B] focus:ring-2 focus:ring-[#6B8E7B]/20"
-                        />
-                      </div>
-
-                      <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-                        <input name="isPublic" type="checkbox" defaultChecked={item.isPublic} className="h-4 w-4 accent-[#166534]" />
-                        Tampilkan anonim di publik
-                      </label>
-
-                      <Button type="submit" className="h-10 w-full rounded-lg bg-[#6B8E7B] hover:bg-[#557162]">
-                        Simpan Perubahan
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </article>
+                  </div>
+                  <div className="inline-flex items-center gap-2 text-sm font-bold text-[#166534] lg:justify-self-end">
+                    Detail & tindakan
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </article>
+              </Link>
             ))
           )}
         </div>
