@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LoginForm } from "./login-form";
 import { getCollectionData } from "@/lib/cms";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
   const pengaturanBeranda = await getCollectionData("pengaturan-beranda");

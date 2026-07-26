@@ -3,7 +3,7 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { getCollectionDataMap } from "@/lib/cms";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function PublicLayout({ children }: { children: ReactNode }) {
   const sharedData = await getCollectionDataMap([
