@@ -3,5 +3,5 @@ import { redirect } from "next/navigation";
 
 export async function GET() {
   await destroySession();
-  redirect("/");
+  redirect("/4d31n");
 }

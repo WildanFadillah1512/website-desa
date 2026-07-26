@@ -11,7 +11,7 @@ import Link from "next/link";
 
 export default async function SettingsAdminPage() {
   const session = await getSession();
-  if (!session) redirect("/");
+  if (!session) redirect("/4d31n");
   
   const user = session.user;
 

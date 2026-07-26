@@ -6,9 +6,8 @@ import { AdminLayoutClient } from "@/components/admin/admin-layout-client";
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await getSession();
 
-  // Bulletproof fallback: If middleware fails to intercept, the layout itself enforces login
   if (!session) {
-    redirect("/");
+    redirect("/4d31n");
   }
 
   return (
