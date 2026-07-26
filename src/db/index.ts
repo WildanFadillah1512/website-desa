@@ -8,14 +8,14 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is missing in environment variables");
 }
 
-// Gunakan max connection pool sesuai batas Aiven (20).
-// Sisakan 2-3 connection untuk Drizzle-Kit / script migrasi.
+// Keep the pool tiny for Next.js build workers and Vercel serverless functions.
+// Large per-process pools quickly exhaust small managed Postgres plans.
 
 const globalForDb = globalThis as unknown as {
   client: postgres.Sql | undefined;
 };
 
-export const client = globalForDb.client ?? postgres(connectionString, { max: 15 });
+export const client = globalForDb.client ?? postgres(connectionString, { max: 1 });
 if (process.env.NODE_ENV !== 'production') globalForDb.client = client;
 
 export const db = drizzle(client, { schema });
