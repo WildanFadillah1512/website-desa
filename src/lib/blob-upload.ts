@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -33,6 +33,15 @@ export async function resolveImageField(formData: FormData, key: string) {
   const blob = await put(`cms/${Date.now()}-${safeFileName(fileValue.name)}`, fileValue, {
     access: "public",
   });
+
+  try {
+    const oldUrl = new URL(existingValue);
+    if (oldUrl.hostname.endsWith("vercel-storage.com")) {
+      await del(existingValue);
+    }
+  } catch {
+    // Existing local/static/base64 values do not need Blob cleanup.
+  }
 
   return blob.url;
 }

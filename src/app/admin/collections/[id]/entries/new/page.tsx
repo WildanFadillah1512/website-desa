@@ -60,7 +60,6 @@ export default async function NewEntryPage({ params }: { params: Promise<{ id: s
 
     invalidateCmsCache();
     revalidatePath(`/admin/collections/${collectionId}/entries`);
-    revalidatePath("/"); // refresh homepage
     revalidateTag("cms", "max");
     redirect(`/admin/collections/${collectionId}/entries`);
   }

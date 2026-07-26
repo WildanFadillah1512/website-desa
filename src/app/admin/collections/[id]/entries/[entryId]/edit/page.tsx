@@ -44,7 +44,6 @@ export default async function EditEntryPage({ params }: { params: Promise<{ id: 
     await db.update(contentEntries).set({ data: mergedData, status, updatedAt: new Date() }).where(eq(contentEntries.id, entryIdNum));
     invalidateCmsCache();
     revalidatePath(`/admin/collections/${collectionId}/entries`);
-    revalidatePath("/"); // refresh homepage
     revalidateTag("cms", "max");
     redirect(`/admin/collections/${collectionId}/entries`);
   }

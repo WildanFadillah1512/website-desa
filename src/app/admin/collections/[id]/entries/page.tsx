@@ -58,7 +58,6 @@ export default async function EntriesPage({ params }: { params: Promise<{ id: st
 
     invalidateCmsCache();
     revalidatePath(`/admin/collections/${collectionId}/entries`);
-    revalidatePath("/");
     revalidateTag("cms", "max");
     redirect(`/admin/collections/${collectionId}/entries`);
   }
@@ -70,7 +69,6 @@ export default async function EntriesPage({ params }: { params: Promise<{ id: st
     await db.delete(contentEntries).where(eq(contentEntries.id, entryId));
     invalidateCmsCache();
     revalidatePath(`/admin/collections/${collectionId}/entries`);
-    revalidatePath("/");
     revalidateTag("cms", "max");
   }
 
