@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Users, FileText, Database,
-  MessageSquare, LogOut, Menu, X, ChevronRight, Globe 
+  MessageSquare, LogOut, Menu, X, ChevronRight, Globe, ShieldCheck
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,17 @@ const navItems: NavItem[] = [
   { href: "/admin/users", icon: Users, label: "Aparatur Desa" },
 ];
 
-export function AdminLayoutClient({ children, user }: { children: ReactNode, user: any }) {
+export function AdminLayoutClient({
+  children,
+  user,
+  logo,
+  desaName,
+}: {
+  children: ReactNode;
+  user: any;
+  logo?: string;
+  desaName?: string;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -61,10 +71,17 @@ export function AdminLayoutClient({ children, user }: { children: ReactNode, use
       >
         <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-slate-100">
           <Link href="/admin/pengaduan" className="flex items-center gap-2.5 font-bold text-[#17211B]">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#166534] text-white shadow-sm text-sm">
-              DC
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white p-1 shadow-sm ring-1 ring-[#166534]/15">
+              {logo ? (
+                <img src={logo} alt={`Logo ${desaName || "Desa"}`} className="h-full w-full object-contain" />
+              ) : (
+                <ShieldCheck className="h-5 w-5 text-[#166534]" />
+              )}
             </div>
-            Admin Panel
+            <span className="leading-tight">
+              <span className="block">Admin Panel</span>
+              <span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{desaName || "Desa"}</span>
+            </span>
           </Link>
           <Button variant="ghost" size="icon-sm" className="lg:hidden" onClick={() => setMobileOpen(false)}>
             <X className="h-5 w-5 text-slate-500" />

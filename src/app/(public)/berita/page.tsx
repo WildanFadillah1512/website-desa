@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Calendar, Newspaper, ArrowRight, Clock } from "lucide-react";
 import { Metadata } from "next";
-import SectionHero from "@/components/ui/section-hero";
-import { getPublishedNews } from "@/lib/cms";
+import { InteriorHero } from "@/components/layout/interior-hero";
+import { getCollectionDataMap, getPublishedNews } from "@/lib/cms";
 
 export const metadata: Metadata = {
   title: "Berita & Pengumuman",
@@ -12,30 +12,40 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function BeritaPage() {
-  const newsList = await getPublishedNews();
+  const [newsList, collectionData] = await Promise.all([
+    getPublishedNews(),
+    getCollectionDataMap(["pengaturan-beranda"]),
+  ]);
+
+  const pengaturanBeranda = collectionData["pengaturan-beranda"] ?? {};
+  const bgImage =
+    pengaturanBeranda.interior_hero_background ||
+    pengaturanBeranda.hero_background ||
+    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000";
 
   const featured = newsList[0];
   const rest     = newsList.slice(1);
 
   return (
-    <>
-      <SectionHero
+    <div className="min-h-screen bg-[#FAF9F6]">
+      <InteriorHero
+        bgImage={bgImage}
         icon={Newspaper}
         eyebrow="Informasi Publik"
         title="Berita & Pengumuman"
         description="Informasi terkini, pengumuman, dan kabar kegiatan langsung dari pemerintah desa."
-        breadcrumbs={[{ label: "Beranda", href: "/" }, { label: "Berita" }]}
+        current="Berita"
       />
 
-      <div className="bg-white">
+      <div className="bg-[#FAF9F6]">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-20">
 
           {newsList.length === 0 ? (
-            <div className="text-center py-28 rounded-2xl border border-dashed border-slate-200 bg-slate-50">
-              <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mx-auto mb-5">
+            <div className="text-center py-28 rounded-2xl border border-dashed border-[#6B8E7B]/20 bg-white">
+              <div className="h-16 w-16 rounded-2xl bg-[#FAF9F6] border border-[#6B8E7B]/10 shadow-sm flex items-center justify-center mx-auto mb-5">
                 <Newspaper className="h-8 w-8 text-slate-300" />
               </div>
-              <h3 className="text-xl font-bold text-slate-700 mb-2">Belum Ada Berita</h3>
+              <h3 className="text-xl font-bold text-[#334155] mb-2">Belum Ada Berita</h3>
               <p className="text-slate-400 text-sm">Berita akan segera dipublikasikan.</p>
             </div>
           ) : (
@@ -44,7 +54,7 @@ export default async function BeritaPage() {
               {featured && (
                 <Link
                   href={`/berita/${featured.slug}`}
-                  className="group mb-12 grid lg:grid-cols-2 gap-0 rounded-2xl border border-slate-200/70 overflow-hidden hover:shadow-xl hover:border-[#166534]/20 transition-all duration-300 block"
+                  className="group mb-12 grid gap-0 overflow-hidden rounded-2xl border border-[#6B8E7B]/15 bg-white shadow-sm transition-all duration-300 hover:border-[#166534]/25 hover:shadow-xl lg:grid-cols-2"
                 >
                   {/* Image */}
                   <div className="relative h-60 lg:h-auto overflow-hidden bg-slate-100">
@@ -78,7 +88,7 @@ export default async function BeritaPage() {
                           : "—"}
                       </time>
                     </div>
-                    <h2 className="text-2xl lg:text-3xl font-black text-slate-900 leading-tight tracking-tight mb-4 group-hover:text-[#166534] transition-colors">
+                    <h2 className="text-2xl lg:text-3xl font-black text-[#334155] leading-tight tracking-tight mb-4 group-hover:text-[#166534] transition-colors">
                       {featured.title}
                     </h2>
                     <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-3">
@@ -95,13 +105,13 @@ export default async function BeritaPage() {
               {/* Grid */}
               {rest.length > 0 && (
                 <>
-                  <h3 className="text-lg font-black text-slate-900 mb-6 tracking-tight">Berita Lainnya</h3>
+                  <h3 className="text-lg font-black text-[#334155] mb-6 tracking-tight">Berita Lainnya</h3>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {rest.map((item, i) => (
                       <Link
                         key={item.id}
                         href={`/berita/${item.slug}`}
-                        className="group card flex flex-col overflow-hidden no-underline animate-fade-in-up"
+                        className="group flex flex-col overflow-hidden rounded-2xl border border-[#6B8E7B]/15 bg-white shadow-sm no-underline transition-all duration-300 hover:-translate-y-1 hover:border-[#166534]/25 hover:shadow-lg animate-fade-in-up"
                         style={{ animationDelay: `${i * 60}ms` }}
                       >
                         {/* Thumbnail */}
@@ -131,7 +141,7 @@ export default async function BeritaPage() {
                                 : "—"}
                             </time>
                           </div>
-                          <h3 className="font-bold text-slate-900 text-base leading-snug mb-3 line-clamp-2 flex-1 group-hover:text-[#166534] transition-colors">
+                          <h3 className="font-bold text-[#334155] text-base leading-snug mb-3 line-clamp-2 flex-1 group-hover:text-[#166534] transition-colors">
                             {item.title}
                           </h3>
                           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-sm font-bold text-[#166534]">
@@ -148,6 +158,6 @@ export default async function BeritaPage() {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
