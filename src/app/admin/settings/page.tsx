@@ -51,12 +51,12 @@ export default async function SettingsAdminPage() {
               </div>
             </CardContent>
             <CardFooter className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-center">
-              <Button asChild variant="destructive" className="w-full rounded-xl bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-0 shadow-none font-bold">
-                <Link href="/auth/logout">
+              <form action="/auth/logout" method="post" className="w-full">
+                <Button type="submit" variant="destructive" className="w-full rounded-xl bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-0 shadow-none font-bold">
                   <LogOut className="h-4 w-4 mr-2" />
                   Keluar dari Sistem
-                </Link>
-              </Button>
+                </Button>
+              </form>
             </CardFooter>
           </Card>
         </div>

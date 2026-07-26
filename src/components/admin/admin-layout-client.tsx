@@ -102,13 +102,15 @@ export function AdminLayoutClient({ children, user }: { children: ReactNode, use
         </div>
 
         <div className="p-4 border-t border-slate-100">
-          <Link 
-            href="/auth/logout" 
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-          >
-            <LogOut className="h-4 w-4 shrink-0 text-slate-400" />
-            Keluar
-          </Link>
+          <form action="/auth/logout" method="post">
+            <button
+              type="submit"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="h-4 w-4 shrink-0 text-slate-400" />
+              Keluar
+            </button>
+          </form>
         </div>
       </aside>
 
