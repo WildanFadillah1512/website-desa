@@ -10,7 +10,6 @@ import {
   ShieldAlert,
   type LucideIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -20,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { db } from "@/db";
 import { pengaduan } from "@/db/schema";
 import { getSession } from "@/lib/auth";
+import { StatusFilter } from "./status-filter";
 
 export const dynamic = "force-dynamic";
 
@@ -158,14 +158,7 @@ export default async function PengaduanAdminPage({ searchParams }: { searchParam
               Menampilkan {rows.length} laporan {activeStatus === "semua" ? "terbaru" : `berstatus ${STATUS_LABELS[activeStatus]}`}.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <FilterLink href="/admin/pengaduan" active={activeStatus === "semua"}>Semua</FilterLink>
-            {STATUSES.map((status) => (
-              <FilterLink key={status.value} href={`/admin/pengaduan?status=${status.value}`} active={activeStatus === status.value}>
-                {status.label}
-              </FilterLink>
-            ))}
-          </div>
+          <StatusFilter value={activeStatus} />
         </div>
 
         <div className="divide-y divide-slate-100">
@@ -282,19 +275,6 @@ function StatCard({
         </div>
         <p className="mt-4 text-3xl font-black tracking-tight text-[#334155]">{value}</p>
       </div>
-    </Link>
-  );
-}
-
-function FilterLink({ href, active, children }: { href: string; active: boolean; children: ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-        active ? "bg-[#166534] text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100"
-      }`}
-    >
-      {children}
     </Link>
   );
 }
