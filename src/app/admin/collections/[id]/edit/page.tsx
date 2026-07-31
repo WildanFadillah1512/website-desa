@@ -49,7 +49,7 @@ export default async function EditCollectionPage({
     }).where(eq(contentCollections.id, colId));
 
     invalidateCmsCache();
-    revalidateTag("cms");
+    revalidateTag("cms", "max");
     revalidatePath("/admin/collections");
     redirect("/admin/collections");
   }
