@@ -11,23 +11,28 @@ export const revalidate = 60;
 
 // ── Page ────────────────────────────────────────────────────
 export default async function Home() {
-  const [latestNews, collectionData, layananSections] = await Promise.all([
+  const [latestNews, collectionData, layananSections, profilSections] = await Promise.all([
     getLatestNews(3),
     getCollectionDataMap([
       "identitas-desa",
       "informasi-wilayah",
       "sambutan-kepala-desa",
       "pengaturan-beranda",
-      "visi-misi",
+      "visi-desa",
     ]),
     getPageSections("layanan"),
+    getPageSections("profil"),
   ]);
 
   const identitasData = collectionData["identitas-desa"] ?? {};
   const wilayahData = collectionData["informasi-wilayah"] ?? {};
   const sambutanData = collectionData["sambutan-kepala-desa"] ?? {};
   const pengaturanBeranda = collectionData["pengaturan-beranda"] ?? {};
-  const visiMisiData = collectionData["visi-misi"] ?? {};
+  const visiData = collectionData["visi-desa"] ?? {};
+  
+  const misiSection = profilSections.find(s => s.collection.slug === 'misi-desa');
+  const misiPoints = misiSection?.entries.map(e => (e.data as any).poin_misi).filter(Boolean) || [];
+
   const layananItems = layananSections.map(({ collection, entries }) => ({
     col: collection,
     data: (entries[0]?.data ?? {}) as Record<string, string>,
@@ -51,8 +56,7 @@ export default async function Home() {
   const statLuas     = wilayahData.luas_wilayah      || "200";
   const statRW       = wilayahData.jumlah_rw         || "12";
 
-  const visi = visiMisiData.visi || "Terwujudnya Desa yang Maju, Mandiri, dan Sejahtera";
-  const misiHtml = visiMisiData.misi || "<ul><li>Meningkatkan kualitas pelayanan publik dan tata kelola pemerintahan desa.</li><li>Membangun infrastruktur desa yang memadai dan berwawasan lingkungan.</li><li>Meningkatkan perekonomian masyarakat desa.</li></ul>";
+  const visi = visiData.visi || "Terwujudnya Desa yang Maju, Mandiri, dan Sejahtera";
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -120,10 +124,15 @@ export default async function Home() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[#6B8E7B]" />
                 <span className="text-xs font-extrabold tracking-widest text-[#6B8E7B] uppercase">Misi Desa</span>
               </div>
-              <div 
-                className="prose-desa prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-[#6B8E7B] prose-ul:pl-6 prose-ol:pl-6 prose-li:mb-2" 
-                dangerouslySetInnerHTML={{ __html: misiHtml }} 
-              />
+              <ul className="prose-desa prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-[#6B8E7B] prose-ul:pl-6 prose-ol:pl-6 prose-li:mb-2 text-[#475569]">
+                {misiPoints.length > 0 ? (
+                  misiPoints.map((poin, idx) => (
+                    <li key={idx} className="font-medium">{poin}</li>
+                  ))
+                ) : (
+                  <li>Belum ada misi yang ditambahkan.</li>
+                )}
+              </ul>
             </div>
             
           </div>
