@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/db";
 import { contentCollections, contentFields } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { CollectionForm } from "./collection-form";
 import { revalidateTag } from "next/cache";
@@ -39,13 +40,51 @@ export default async function NewCollectionPage({
       isSingleton,
     }).returning();
 
-    // Injeksi 4 default fields sebagai bawaan sistem (isSystem=true, isDeletable=false)
-    await db.insert(contentFields).values([
-      { collectionId: inserted.id, name: 'Judul', key: 'title', type: 'text', isRequired: true, isPublic: true, isDeletable: false, isSystem: true, sortOrder: 1 },
-      { collectionId: inserted.id, name: 'Deskripsi Singkat', key: 'summary', type: 'textarea', isRequired: false, isPublic: true, isDeletable: false, isSystem: true, sortOrder: 2 },
-      { collectionId: inserted.id, name: 'Isi Konten Lengkap', key: 'content', type: 'richtext', isRequired: false, isPublic: true, isDeletable: false, isSystem: true, sortOrder: 3 },
-      { collectionId: inserted.id, name: 'Gambar / Foto Utama', key: 'thumbnail', type: 'image', isRequired: false, isPublic: true, isDeletable: false, isSystem: true, sortOrder: 4 },
-    ]);
+    const PAGE_INDUK_SLUGS: Record<string, string> = {
+      beranda: 'sambutan-kepala-desa',
+      profil: 'identitas-desa',
+      layanan: 'daftar-layanan',
+      eduvillage: 'daftar-pts',
+      'data-penduduk': 'data-pekerjaan',
+      umum: 'kontak-desa',
+    };
+
+    const indukSlug = PAGE_INDUK_SLUGS[page];
+    let copiedFields = false;
+
+    if (indukSlug) {
+      const [induk] = await db.select().from(contentCollections).where(eq(contentCollections.slug, indukSlug));
+      if (induk) {
+        const indukFields = await db.select().from(contentFields).where(eq(contentFields.collectionId, induk.id));
+        if (indukFields.length > 0) {
+          await db.insert(contentFields).values(
+            indukFields.map((f) => ({
+              collectionId: inserted.id,
+              name: f.name,
+              key: f.key,
+              type: f.type,
+              unit: f.unit,
+              isRequired: f.isRequired,
+              isPublic: f.isPublic,
+              isDeletable: f.isDeletable,
+              isSystem: f.isSystem,
+              sortOrder: f.sortOrder,
+            }))
+          );
+          copiedFields = true;
+        }
+      }
+    }
+
+    if (!copiedFields) {
+      // Injeksi 4 default fields sebagai bawaan sistem (isSystem=true, isDeletable=false)
+      await db.insert(contentFields).values([
+        { collectionId: inserted.id, name: 'Judul', key: 'title', type: 'text', isRequired: true, isPublic: true, isDeletable: false, isSystem: true, sortOrder: 1 },
+        { collectionId: inserted.id, name: 'Deskripsi Singkat', key: 'summary', type: 'textarea', isRequired: false, isPublic: true, isDeletable: false, isSystem: true, sortOrder: 2 },
+        { collectionId: inserted.id, name: 'Isi Konten Lengkap', key: 'content', type: 'richtext', isRequired: false, isPublic: true, isDeletable: false, isSystem: true, sortOrder: 3 },
+        { collectionId: inserted.id, name: 'Gambar / Foto Utama', key: 'thumbnail', type: 'image', isRequired: false, isPublic: true, isDeletable: false, isSystem: true, sortOrder: 4 },
+      ]);
+    }
 
     invalidateCmsCache();
     revalidateTag("cms", "max");

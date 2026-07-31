@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings2, Trash2, Layout, Database } from "lucide-react";
+import { Plus, Settings2, Trash2, Layout, Database, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { invalidateCmsCache } from "@/lib/cms";
 
@@ -164,6 +164,11 @@ export default async function CollectionsPage() {
                         </div>
 
                         <div className="md:col-span-3 flex items-center justify-end gap-2 transition-all duration-300">
+                          <Button variant="outline" size="sm" className="bg-white border-slate-200 text-[#475569] hover:border-[#6B8E7B]/50 hover:text-[#6B8E7B] rounded-lg">
+                            <Link href={`/admin/collections/${col.id}/edit`} className="flex items-center" title="Edit Komponen">
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          </Button>
                           {!LOCKED_FIELDS_SLUGS.includes(col.slug) && (
                             <Button variant="outline" size="sm" className="bg-white border-slate-200 text-[#475569] hover:border-[#6B8E7B]/50 hover:text-[#6B8E7B] rounded-lg">
                               <Link href={`/admin/collections/${col.id}/fields`} className="flex items-center">
