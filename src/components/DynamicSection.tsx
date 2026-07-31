@@ -138,7 +138,7 @@ export function DynamicSection({ collection, fields, entries }: DynamicSectionPr
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-[#6B8E7B]/10 bg-[#FAF9F6]">
-                    <th className="px-4 py-3 text-[10px] font-extrabold text-[#64748B] uppercase tracking-widest w-12">#</th>
+                    <th className="px-4 py-3 text-[10px] font-extrabold text-[#64748B] uppercase tracking-widest w-12">No</th>
                     {publicFields.map((f) => (
                       <th key={f.id} className="px-4 py-3 text-[10px] font-extrabold text-[#64748B] uppercase tracking-widest whitespace-nowrap">
                         {f.name}{f.unit ? ` (${f.unit})` : ""}

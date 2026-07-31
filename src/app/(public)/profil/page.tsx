@@ -73,7 +73,7 @@ export default async function ProfilPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[#6B8E7B]" />
                 <span className="text-xs font-extrabold tracking-widest text-[#6B8E7B] uppercase">Misi Desa</span>
               </div>
-              <ul className="prose-desa prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-[#6B8E7B] prose-ul:pl-6 prose-ol:pl-6 prose-li:mb-2 text-[#475569]">
+              <ul className="list-disc marker:text-[#6B8E7B] pl-6 space-y-2 text-[#475569]">
                 {misiPoints.length > 0 ? (
                   misiPoints.map((poin, idx) => (
                     <li key={idx} className="font-medium">{poin}</li>
