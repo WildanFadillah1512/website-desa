@@ -92,7 +92,6 @@ export function DynamicSection({ collection, fields, entries }: DynamicSectionPr
                     className="flex flex-col gap-1 p-3 rounded-xl hover:bg-[#FAF9F6] border border-transparent hover:border-[#6B8E7B]/10 transition-colors"
                   >
                     <dt className="flex items-center gap-2 text-[10px] font-extrabold text-[#64748B] uppercase tracking-widest">
-                      <FieldTypeIcon type={field.type} />
                       <span>
                         {field.name}
                         {field.unit && <span className="text-[#6B8E7B]/60 font-semibold ml-1">({field.unit})</span>}
